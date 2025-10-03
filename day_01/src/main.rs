@@ -80,7 +80,6 @@ fn main()
                 eprintln!("Error: could not read line from file, {}", e);
                 process::exit(1);
             }
-
         }
     }
 
