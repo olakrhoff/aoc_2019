@@ -5,7 +5,7 @@ This year, as last year, I will try to get all my solutions to run in under *one
 | Day | Part 1 | Part 2 | Used -O |
 |------------------|-----------------|-----------------|-----------------|
 | 1    | 581.625µs    | 988.205µs    | -O0 |
-| 2    | - ms    | - ms    | -O0 |
+| 2    | 180.504µs    | - ms    | -O0 |
 | 3    | - ms    | - ms  | -O0 |
 | 4    | - ms    | - ms    | -O0 |
 | 5    | - ms    | - ms    | -O0 |
