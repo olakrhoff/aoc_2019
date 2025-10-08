@@ -7,11 +7,13 @@ const DATA_FILE_PATH: &str = "data.txt";
 const TEST_DATA_FILE_PATH: &str = "test_data.txt";
 
 const DEBUG: bool = false;
-const PART_TWO: bool = false;
+const PART_TWO: bool = true;
+const MAGIC_NUMBER: u64 = 19690720;
+const MAGIC_NUMBER_DEBUG: u64 = 30;
 
-fn parse_line_to_numbers(line: &str) -> Vec<u32>
+fn parse_line_to_numbers(line: &str) -> Vec<u64>
 {
-    let mut numbers: Vec<u32> = Vec::new();
+    let mut numbers: Vec<u64> = Vec::new();
 
     for n in line.split(',')
     {
@@ -23,7 +25,7 @@ fn parse_line_to_numbers(line: &str) -> Vec<u32>
             }
             Err(e) => 
             {
-                eprintln!("Could not convert '{}' to a u32, error: {}", n, e);
+                eprintln!("Could not convert '{}' to a u64, error: {}", n, e);
                 process::exit(1);
             }
         }
@@ -32,10 +34,18 @@ fn parse_line_to_numbers(line: &str) -> Vec<u32>
     numbers
 }
 
-fn run_program(program: &mut Vec<u32>)
+fn print_program(program: &Vec<u64>)
 {
-    let mut index = 0;
-    
+    for p in program
+    {
+        print!("{}, ", p);
+    }
+    println!("");
+}
+
+fn run_program(program: &mut Vec<u64>)
+{
+    let mut index: usize = 0;
     loop
     {
         println!("INDEX: {}", index);
@@ -47,6 +57,7 @@ fn run_program(program: &mut Vec<u32>)
                 let index2 = program[index + 2];
                 let index3 = program[index + 3];
 
+                println!("index1: {}", index1);
                 let val1 = program[index1 as usize];
                 let val2 = program[index2 as usize];
 
@@ -85,6 +96,92 @@ fn run_program(program: &mut Vec<u32>)
     }
 }
 
+fn solve_for_values(program: &Vec<u64>, magic_number: u64, noun_bound: (u64, u64), verb_bound: (u64, u64)) -> (u64, u64)
+{
+    let noun: u64 = (noun_bound.1 + noun_bound.0) / 2; 
+    let verb: u64 = (verb_bound.1 + verb_bound.0) / 2; 
+
+    let mut new_program = program.clone();
+    new_program[1] = noun;
+    new_program[2] = verb;
+    run_program(&mut new_program);
+
+    let solution: u64 = new_program[0];
+    println!("Noun: {} ({}, {}), verb: {} ({}, {}), solution: {} (MN: {})", noun, noun_bound.0, noun_bound.1, verb, verb_bound.0, verb_bound.1, solution, magic_number);
+
+    if solution == magic_number
+    {
+        return (noun, verb);
+    }
+    else if solution < magic_number
+    {
+        if noun + 1 <= noun_bound.1
+        {
+            let sub = solve_for_values(program, magic_number, (noun + 1, noun_bound.1), verb_bound);
+            if sub != (0, 0)
+            {
+                return sub;
+            }
+        }
+        if verb + 1 <= verb_bound.1
+        {
+            let sub = solve_for_values(program, magic_number, noun_bound, (verb + 1, verb_bound.1));
+
+            if sub != (0, 0)
+            {
+                return sub;
+            }
+        }
+        return (0, 0);
+    }
+    else // solution > magic_number
+    {
+        if noun == 0
+        {
+            return (0, 0);
+        }
+        if noun_bound.0 <= noun - 1
+        {
+            let sub = solve_for_values(program, magic_number, (noun_bound.0, noun - 1), verb_bound);
+            if sub != (0, 0)
+            {
+                return sub;
+            }
+        }
+        if verb == 0
+        {
+            return (0, 0);
+        }
+        if verb_bound.0 <= verb - 1
+        {
+            let sub = solve_for_values(program, magic_number, noun_bound, (verb_bound.0, verb - 1));
+            if sub != (0, 0)
+            {
+                return sub;
+            }
+        }
+        
+        return (0, 0);
+    }
+}
+
+fn solve_for_magic_number(program: &mut Vec<u64>, magic_number: u64) -> u64
+{
+    let mut noun_bound: (u64, u64) = (0, 99);
+    let mut verb_bound: (u64, u64) = (0, 99);
+    if DEBUG
+    {
+        if noun_bound.1 > program.len().try_into().unwrap()
+        {
+            noun_bound.1 = program.len().try_into().unwrap();
+            verb_bound.1 = program.len().try_into().unwrap();
+        }
+    }
+    let (noun, verb) = solve_for_values(&program, magic_number, noun_bound, verb_bound);
+
+    100 * noun + verb
+}
+
 fn main()
 {
     println!("Starting...");
@@ -102,7 +199,7 @@ fn main()
 
     let start_time = Instant::now();
 
-    let mut program: Vec<u32> = Vec::new(); 
+    let mut program: Vec<u64> = Vec::new(); 
 
     for result in reader.lines()
     {
@@ -121,23 +218,34 @@ fn main()
     }
 
     // DO THE PROCESSING OF THE DATA HERE
-    if !DEBUG
+    if !PART_TWO
     {
-        program[1] = 12;
-        program[2] = 2;
+        if !DEBUG
+        {
+            program[1] = 12;
+            program[2] = 2;
+        }
+        run_program(&mut program);
+        let val = program[0];
+        println!("val at index 0 is: {}", val);
+        println!("The result in postion 0 is: {}", program[0]);
     }
-    run_program(&mut program);
+    else
+    {
+        let result: u64;
+        if DEBUG
+        {
+            result = solve_for_magic_number(&mut program, MAGIC_NUMBER_DEBUG);
+        }
+        else // not DEBUG
+        {
+            result = solve_for_magic_number(&mut program, MAGIC_NUMBER);
+        }
+        println!("The result is: {}", result);
+    }
 
     let duration = start_time.elapsed();
-
-    for num in &program
-    {
-        print!("{},", num);
-    }
-       
-    println!("");
-
-    println!("The result in postion 0 is: {}", program[0]);
+    
 
     println!("Finished running in: {:.3?}", duration);
 }
