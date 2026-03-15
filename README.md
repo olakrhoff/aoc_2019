@@ -2,7 +2,7 @@
 
 This year, as last year, I will try to get all my solutions to run in under *one* second. New to this year is that I will keep a table below of the runtime of my solutions.
 
-| Day | Part 1 | Part 2 | Used -O |
+| Day | Part 1 | Part 2 | RUSTFLAGS |
 |------------------|-----------------|-----------------|-----------------|
 | 1    | 581.625µs    | 988.205µs    |  |
 | 2    | 53.550µs    | 14.296ms    |  |
