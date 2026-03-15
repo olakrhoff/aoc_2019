@@ -4,6 +4,7 @@ use std::process;
 use std::time::Instant;
 use regex::Regex;
 use std::collections::BTreeSet;
+use std::collections::HashMap;
 
 const DATA_FILE_PATH: &str = "data.txt";
 const TEST_DATA_FILE_PATH: &str = "test_data.txt";
@@ -11,8 +12,8 @@ const TEST_DATA_FILE_PATH: &str = "test_data.txt";
 const DEBUG: bool = false;
 const PART_TWO: bool = false;
 
-#[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
-struct Coord
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Hash)]
+pub struct Coord
 {
     x: i32,
     y: i32
@@ -226,18 +227,18 @@ fn check_overlap(a: Segment, b: Segment) -> Vec<Coord>
     result
 }
 
-fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
+pub fn find_intersections(wire_a: &Vec<Coord>, wire_b: &Vec<Coord>) -> Vec<Coord>
 {
     let set_by_x: BTreeSet<CoordByX> = wire_a
-		.iter()
+        .iter()
         .enumerate()
-		.map(|(index, &coord)| CoordByX {coord, index})
+        .map(|(index, &coord)| CoordByX { coord, index })
         .collect();
     let set_by_y: BTreeSet<CoordByY> = wire_a
-		.iter()
-		.enumerate()
-		.map(|(index, &coord)| CoordByY {coord, index})
-		.collect();
+        .iter()
+        .enumerate()
+        .map(|(index, &coord)| CoordByY { coord, index })
+        .collect();
 
     // Step 1: Find all intersections
     let mut intersections: Vec<Coord> = vec!();
@@ -246,8 +247,8 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
     {
         let start = wire_b[current_index];
         let stop = wire_b[current_index + 1];
-        let b_segment = Segment {start, stop};
-        
+        let b_segment = Segment { start, stop };
+
         if b_segment.is_horisontal()
         {
             let y = start.y;
@@ -257,20 +258,20 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
             let candidates = set_by_x.range(
                 CoordByX
                 {
-                    coord: Coord {x: x_min, y},
+                    coord: Coord { x: x_min, y },
                     index: 0,
                 }..=CoordByX
                 {
-                    coord: Coord {x: x_max, y},
+                    coord: Coord { x: x_max, y },
                     index: 0,
                 });
-            
+
             for candidate in candidates
             {
                 let index = candidate.index;
                 if index > 0
                 {
-                    let a_segment = Segment 
+                    let a_segment = Segment
                     {
                         start: wire_a[index - 1],
                         stop: wire_a[index]
@@ -281,7 +282,7 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
 
                 if index < wire_a.len() - 1
                 {
-                    let a_segment = Segment 
+                    let a_segment = Segment
                     {
                         start: wire_a[index],
                         stop: wire_a[index + 1]
@@ -300,11 +301,11 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
             let candidates = set_by_y.range(
                 CoordByY
                 {
-                    coord: Coord {x, y: y_min},
+                    coord: Coord { x, y: y_min },
                     index: 0
                 }..=CoordByY
                 {
-                    coord: Coord {x, y: y_max},
+                    coord: Coord { x, y: y_max },
                     index: 0
                 });
 
@@ -312,7 +313,7 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
             {
                 let index = candidate.index;
 
-                if index > 0 
+                if index > 0
                 {
                     let a_segment = Segment
                     {
@@ -334,11 +335,17 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
                     intersections.extend(check_overlap(a_segment, b_segment));
                 }
             }
-
         }
     }
 
     intersections.retain(|c| !(c.x == 0 && c.y == 0));
+    intersections.dedup();
+    intersections
+}
+
+fn solve_1(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
+{
+    let intersections = find_intersections(&wire_a, &wire_b);
 
     // Step 2: Find the closest in Manhatten distance, and return it
     let mut shortest_distance: u32 = u32::MAX;
@@ -353,6 +360,106 @@ fn solve(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
     }
 
     shortest_distance
+}
+
+fn points_on_segment(seg: Segment) -> Vec<Coord>
+{
+    let mut points = vec!();
+
+    if seg.is_horisontal()
+    {
+        let y = seg.start.y;
+        let x1 = seg.start.x;
+        let x2 = seg.stop.x;
+        let x_min = x1.min(x2);
+        let x_max = x1.max(x2);
+
+        for x in x_min..=x_max
+        {
+            points.push(Coord {x, y});
+        }
+
+        if x1 != x_min
+        {
+            points.reverse();
+        }
+    }
+    else
+    {
+        let x = seg.start.x;
+        let y1 = seg.start.y;
+        let y2 = seg.stop.y;
+        let y_min = y1.min(y2);
+        let y_max = y1.max(y2);
+
+        for y in y_min..=y_max
+        {
+            points.push(Coord {x, y});
+        }
+        
+        if y1 != y_min
+        {
+            points.reverse();
+        }
+    }
+
+    points
+}
+
+fn solve_2(wire_a: Vec<Coord>, wire_b: Vec<Coord>) -> u32
+{
+    let intersections = find_intersections(&wire_a, &wire_b);
+
+    let mut steps_a: HashMap<Coord, u32> = HashMap::new();
+    let mut steps = 0;
+
+    for i in 1..wire_a.len()
+    {
+        let seg = Segment
+        {
+            start: wire_a[i - 1],
+            stop: wire_a[i]
+        };
+
+
+        for p in points_on_segment(seg)
+        {
+            if intersections.contains(&p)
+            {
+                steps_a.entry(p).or_insert(steps);
+            }
+            steps += 1;
+        }
+        steps -= 1;
+    }
+
+    let mut best = u32::MAX;
+    steps = 0;
+
+    for i in 1..wire_b.len()
+    {
+        if steps > best
+        {
+            break;
+        }
+        let seg = Segment
+        {
+            start: wire_b[i - 1],
+            stop: wire_b[i]
+        };
+
+        for p in points_on_segment(seg)
+        {
+            if let Some(&sa) = steps_a.get(&p)
+            {
+                best = best.min(sa + steps);
+            }
+            steps += 1;
+        }
+        steps -= 1;
+    }
+
+    best
 }
 
 fn main()
@@ -397,10 +504,26 @@ fn main()
         process::exit(1);
     }
 
-    let distance: u32 = solve(wires[0].to_vec(), wires[1].to_vec());
+    let distance: u32;
+    if !PART_TWO
+    {
+        distance = solve_1(wires[0].to_vec(), wires[1].to_vec());
+    }
+    else //PART_TWO
+    {
+        distance = solve_2(wires[0].to_vec(), wires[1].to_vec());
+    }
 
     let duration = start_time.elapsed();
 
-    println!("Manhatten distance from start to closest intersection is: {}", distance);
+    if !PART_TWO
+    {
+        println!("Manhatten distance from start to closest intersection is: {}", distance);
+    }
+    else //PART_TWO
+    {
+        println!("The shortes total (summed) distance to an intersection is: {}", distance);
+    }
+
     println!("Finished running in: {:.3?}", duration);
 }
