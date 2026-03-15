@@ -7,7 +7,7 @@ const DATA_FILE_PATH: &str = "data.txt";
 const TEST_DATA_FILE_PATH: &str = "test_data.txt";
 
 const DEBUG: bool = false;
-const PART_TWO: bool = false;
+const PART_TWO: bool = true;
 
 fn check_criteria(number: u32) -> bool
 {
@@ -18,7 +18,6 @@ fn check_criteria(number: u32) -> bool
         let digit = u32::from(digit_char) as i16;
         if digit < previous_digit
         {
-            println!("Number: {}", number);
             return false;
         }
         if previous_digit == digit
@@ -40,6 +39,50 @@ pub fn solve_1(start: u32, stop: u32) -> u32
         if check_criteria(num)
         {
             counter += 1;
+        }
+    }
+
+    counter
+}
+
+pub fn extra_criertion(number: u32) -> bool
+{
+    let mut previous = 'a';
+    let mut current_count = 0;
+
+    for digit in number.to_string().chars()
+    {
+        if digit == previous
+        {
+            current_count += 1;
+        }
+        else
+        {
+            if current_count == 2
+            {
+                return true;
+            }
+
+            previous = digit;
+            current_count = 1;
+        }
+    }
+
+    current_count == 2
+}
+
+pub fn solve_2(start: u32, stop: u32) -> u32
+{
+    let mut counter = 0;
+
+    for num in start..=stop
+    {
+        if check_criteria(num)
+        {
+            if extra_criertion(num)
+            {
+                counter += 1;
+            }
         }
     }
 
@@ -117,11 +160,30 @@ fn main()
     }
 
     // DO THE PROCESSING OF THE DATA HERE
-
-    let number_of_passwords = solve_1(start_number, stop_number);
-    println!("Number of possible passwords: {}", number_of_passwords);
+    if !PART_TWO
+    {
+        let number_of_passwords = solve_1(start_number, stop_number);
+        println!("Number of possible passwords: {}", number_of_passwords);
+    }
+    else // PART_TWO
+    {
+        let number_of_passwords = solve_2(start_number, stop_number);
+        println!("Number of possible passwords: {}", number_of_passwords);
+    }
 
     let duration = start_time.elapsed();
 
     println!("Finished running in: {:.3?}", duration);
+}
+
+#[cfg(test)] // Tells Rust to only compile this module when running cargo test
+mod tests {
+    use super::*; // Imports functions from the outer module
+
+    #[test] // Marks this function as a test
+    fn test_extra_crietrion() {                
+        assert_eq!(extra_criertion(112233), true);
+        assert_eq!(extra_criertion(123444), false);
+        assert_eq!(extra_criertion(111122), true);
+    }
 }
