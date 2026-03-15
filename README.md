@@ -1,6 +1,6 @@
 # Advent of Code 2019
 
-This year, as last year, I will try to get all my solutions to run in under *one* second. New to this year is that I will keep a table below of the runtime of my solutions.
+As a goal I will try to get all my solutions to run in under *one* second. I will keep a table below of the runtime of my solutions. I run each solution *five* times and take the mean value as the benchmark.
 
 | Day | Part 1 | Part 2 | RUSTFLAGS |
 |------------------|-----------------|-----------------|-----------------|
