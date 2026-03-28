@@ -3,17 +3,29 @@ use std::io::BufRead;
 use std::process;
 use std::time::Instant;
 
+use clap::Parser;
+
 const DATA_FILE_PATH: &str = "data.txt";
 const TEST_DATA_FILE_PATH: &str = "test_data.txt";
 
-const DEBUG: bool = false;
-const PART_TWO: bool = false;
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args
+{
+    #[arg(short, long, default_value_t=false)]
+    debug: bool,
+
+    #[arg(short, long, default_value_t=false)]
+    part_two: bool,
+}
 
 
 fn main()
 {
+    let args = Args::parse();
+
     println!("Starting...");
-    let filename = if DEBUG { TEST_DATA_FILE_PATH } else { DATA_FILE_PATH };
+    let filename = if args.debug { TEST_DATA_FILE_PATH } else { DATA_FILE_PATH };
     let file = match fs::File::open(filename)
     {
         Ok(f) => f,

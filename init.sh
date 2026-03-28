@@ -38,3 +38,7 @@ echo "Template file 'template.rs' copied to '$project_name/src/main.rs'."
 # Create extra data files
 touch "$project_name/data.txt" "$project_name/test_data.txt"
 echo "Extra files 'data.txt' and 'test_data.txt' created."
+
+# Writes clap to the dependencies in cargo.toml
+echo 'clap = { version = "4.6", features = ["derive"] }' >> "$project_name/Cargo.toml"
+echo "Updated Cargo.toml"
