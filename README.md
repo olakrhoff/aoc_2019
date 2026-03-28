@@ -8,7 +8,7 @@ As a goal I will try to get all my solutions to run in under *one* second. I wil
 | 2    | 53.550µs    | 14.296ms    |  |
 | 3    | 65ms    | 73 ms  | -C target-cpu=native --release |
 | 4    | 94 ms    | 96 ms    |  |
-| 5    | - ms    | - ms    |  |
+| 5    | 940 µs    | - ms    |  |
 | 6    | - ms    | - ms    |  |
 | 7    | - ms    | - ms    |  |
 | 8    | - ms    | - ms    |  |
