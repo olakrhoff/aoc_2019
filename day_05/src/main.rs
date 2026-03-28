@@ -50,6 +50,10 @@ enum Opcode
     MUL = 2,
     INPUT = 3,
     OUTPUT = 4,
+    JMP_EQ = 5,
+    JMP_NE = 6,
+    LESS = 7,
+    EQUAL = 8,
     EXIT = 99,
 }
 
@@ -63,6 +67,10 @@ impl Display for Opcode
             Opcode::MUL => "MUL",
             Opcode::INPUT => "INPUT",
             Opcode::OUTPUT => "OUPUT",
+            Opcode::JMP_EQ => "JUMP_EQ",
+            Opcode::JMP_NE => "JUMP_NE",
+            Opcode::LESS => "LESS",
+            Opcode::EQUAL => "EQUAL",
             Opcode::EXIT => "EXIT"
         };
         write!(f, "{}", text)
@@ -109,6 +117,10 @@ impl Instruction
             2 => Opcode::MUL,
             3 => Opcode::INPUT,
             4 => Opcode::OUTPUT,
+            5 => Opcode::JMP_EQ,
+            6 => Opcode::JMP_NE,
+            7 => Opcode::LESS,
+            8 => Opcode::EQUAL,
             99 => Opcode::EXIT,
             other => {
                 eprintln!("Invalid opcode: {}", other);
@@ -235,6 +247,120 @@ fn run_program(program: &mut Vec<i64>, input: i64) -> Vec<i64>
                 println!("OUTPUT [{}] => {}", index1, val1);
                 index += 2
             }
+            Opcode::JMP_EQ => 
+            {
+                let index1 = program[index + 1];
+                let index2 = program[index + 2];
+                
+                let val1 = match instruction.first_param
+                {
+                    Mode::POSITION => program[index1 as usize],
+                    Mode::IMMEDIATE => index1,
+                };
+
+                if val1 != 0 as i64
+                {
+                    let val2 = match instruction.second_param
+                    {
+                        Mode::POSITION => program[index2 as usize],
+                        Mode::IMMEDIATE => index2,
+                    };
+                    index = val2 as usize;
+                    println!("JMP_EQ (YES) {} => [{}]", val1, val2);
+                }
+                else
+                {
+                    index += 3;
+                    println!("JMP_EQ (NO) {} => [{}]", val1, index);
+                }
+            }
+            Opcode::JMP_NE => 
+            {
+                let index1 = program[index + 1];
+                let index2 = program[index + 2];
+
+                let val1 = match instruction.first_param
+                {
+                    Mode::POSITION => program[index1 as usize],
+                    Mode::IMMEDIATE => index1,
+                };
+
+                if val1 == 0 as i64
+                {
+                    let val2 = match instruction.second_param
+                    {
+                        Mode::POSITION => program[index2 as usize],
+                        Mode::IMMEDIATE => index2,
+                    };
+                    index = val2 as usize;
+                    println!("JMP_NE (YES) {} => [{}]", val1, val2);
+                }
+                else
+                {
+                    index += 3;
+                    println!("JMP_NE (NO) {} => [{}]", val1, index);
+                }
+                
+            }
+            Opcode::LESS => 
+            {
+                let index1 = program[index + 1];
+                let index2 = program[index + 2];
+                let index3 = program[index + 3];
+
+                let val1 = match instruction.first_param
+                {
+                    Mode::POSITION => program[index1 as usize],
+                    Mode::IMMEDIATE => index1,
+                };
+                let val2 = match instruction.second_param
+                {
+                    Mode::POSITION => program[index2 as usize],
+                    Mode::IMMEDIATE => index2,
+                };
+
+                let mut store_value = 0;
+
+                if val1 < val2
+                {
+                    store_value = 1;
+                }
+
+                program[index3 as usize] = store_value;
+
+                index += 4;
+                println!("LESS {}({}) {}({}) => {}({})", val1, index1, val2, index2, store_value, index3);
+            }
+            Opcode::EQUAL => 
+            {
+                let index1 = program[index + 1];
+                let index2 = program[index + 2];
+                let index3 = program[index + 3];
+
+                let val1 = match instruction.first_param
+                {
+                    Mode::POSITION => program[index1 as usize],
+                    Mode::IMMEDIATE => index1,
+                };
+                let val2 = match instruction.second_param
+                {
+                    Mode::POSITION => program[index2 as usize],
+                    Mode::IMMEDIATE => index2,
+                };
+
+                let mut store_value = 0;
+
+                if val1 == val2
+                {
+                    store_value = 1;
+                }
+
+                program[index3 as usize] = store_value;
+
+                index += 4;
+
+                println!("EQUAL {}({}) {}({}) => {}({})", val1, index1, val2, index2, store_value, index3);
+            }
             Opcode::EXIT => // Exit program
             {
                 println!("EXIT");
@@ -286,7 +412,7 @@ fn main()
 
     if !args.part_two
     {
-        let mut outputs = run_program(&mut program, 1);
+        let mut outputs = run_program(&mut program, 5);
        
         for v in &outputs
         {
